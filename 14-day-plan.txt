@@ -1,0 +1,217 @@
+---
+
+# 📅 **14-DAY CRASH PATH (C++ for DSA)**
+
+🎯 Goal: **logic → code without fear**
+
+---
+
+## 🔹 DAYS 1–2 → Syntax Repair
+
+**Focus:** stop silly errors, regain confidence
+
+### Practice:
+
+* input / output
+* if–else
+* loops
+* functions
+
+### Mini-tasks:
+
+* max of 2 numbers
+* even / odd
+* sum of N numbers
+* factorial
+* prime check
+
+🎯 **Goal:**
+👉 write code without syntax fear
+
+---
+
+## 🔹 DAYS 3–4 → Arrays + Vectors
+
+**Focus:** index handling + loops
+
+### Tasks:
+
+* sum of array
+* largest element
+* reverse array
+* linear search
+* count frequency
+
+### Introduce:
+
+```cpp
+vector<int> v;
+v.push_back(x);
+v.size();
+```
+
+---
+
+## 🔹 DAYS 5–6 → Strings
+
+**Focus:** character handling
+
+### Tasks:
+
+* reverse string
+* count vowels
+* palindrome
+* remove spaces
+
+### Learn:
+
+```cpp
+getline(cin, s);
+s.length();
+```
+
+---
+
+## 🔹 DAY 7 → Recursion (only basics)
+
+**Focus:** base case + self-call
+
+### Tasks:
+
+* factorial
+* sum of digits
+* print 1 to N
+
+🎯 Goal:
+👉 understand base case + recursive call
+
+---
+
+## 🔹 DAYS 8–9 → Sorting + Searching
+
+### Implement manually:
+
+* binary search
+* bubble sort
+* selection sort
+
+### Also learn STL:
+
+```cpp
+sort(arr, arr+n);
+sort(v.begin(), v.end());
+```
+
+---
+
+## 🔹 DAYS 10–11 → DSA Pattern Problems
+
+**Most important bridge: logic → code**
+
+### Must solve:
+
+* second largest
+* move zeros
+* prefix sum
+* two sum
+* frequency array
+
+🎯 Goal:
+👉 convert idea → loops → code
+
+---
+
+## 🔹 DAYS 12–13 → Class-Level DSA Practice
+
+### Solve:
+
+* class problems
+* homework
+* old mistakes
+
+### Rule:
+
+❌ don’t watch solution first
+✔ try → fail → fix
+
+(This is where confidence forms.)
+
+---
+
+## 🔹 DAY 14 → Confidence Day
+
+Redo:
+
+* 5 problems she failed earlier
+* without help
+
+🎯 This locks learning into memory.
+
+---
+
+# 🧠 KEY TRAINING METHOD (MOST IMPORTANT)
+
+For **every problem**:
+
+### Step 1: Write logic in English
+
+> “take input, loop, check condition, print result”
+
+### Step 2: Write skeleton
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // logic here
+}
+```
+
+### Step 3: Fill inside slowly
+
+✅ This kills “blank screen fear”
+
+---
+
+# 🛠️ ERROR-KILLER HABITS
+
+She must:
+
+✔ read compiler errors
+✔ fix ONE error at a time
+✔ never rewrite whole code
+✔ learn common mistakes:
+
+* missing `;`
+* wrong `{ }`
+* using `=` instead of `==`
+* loop out of bounds
+
+⚠ These habits matter more than IQ.
+
+---
+
+# 🎯 DAILY MINIMUM TARGET
+
+Every day she must:
+
+✔ write **5–8 programs**
+✔ compile them
+✔ fix errors herself
+
+⏱ Even 1.5–2 hours/day is enough.
+
+---
+
+## ❤️ IMPORTANT PSYCHOLOGY PART (FOR HER)
+
+She is **not bad at logic**
+She is bad at:
+❌ syntax recall
+❌ error handling
+❌ confidence
+
+This plan fixes exactly that.
+
+---
