@@ -8,6 +8,22 @@ import { tmpdir } from 'os';
 const router = express.Router();
 const execAsync = promisify(exec);
 
+// Custom exec function that properly captures stderr
+const execWithErrorCapture = (command, options = {}) => {
+  return new Promise((resolve, reject) => {
+    exec(command, { ...options, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) {
+        // Attach stdout and stderr to error object
+        error.stdout = stdout;
+        error.stderr = stderr;
+        reject(error);
+      } else {
+        resolve({ stdout, stderr });
+      }
+    });
+  });
+};
+
 // Timeout for code execution (10 seconds)
 const EXECUTION_TIMEOUT = 10000;
 
@@ -59,27 +75,30 @@ router.post('/execute', async (req, res) => {
 
     // Compile C++ code
     const executablePath = tempFile.replace('.cpp', '');
-    const compileCommand = `g++ -o "${executablePath}" "${tempFile}" -std=c++17 2>&1`;
+    const compileCommand = `g++ -o "${executablePath}" "${tempFile}" -std=c++17`;
     
     let compileResult;
     try {
-      compileResult = await execAsync(compileCommand, { 
-        timeout: 5000,
-        maxBuffer: 1024 * 1024 // 1MB buffer
+      compileResult = await execWithErrorCapture(compileCommand, { 
+        timeout: 5000
       });
     } catch (compileError) {
       // Compilation error - capture detailed error message
+      // g++ writes errors to stderr, so prioritize that
       const errorOutput = compileError.stderr || compileError.stdout || compileError.message || 'Compilation failed';
-      console.error('Compilation error:', {
+      
+      console.error('Compilation error details:', {
         message: compileError.message,
         stderr: compileError.stderr,
         stdout: compileError.stdout,
-        code: compileError.code
+        code: compileError.code,
+        signal: compileError.signal
       });
       
+      // Return the actual compilation error
       return res.json({
         success: false,
-        output: errorOutput.toString(),
+        output: errorOutput.toString().trim() || 'Compilation failed - no error details available',
         error: 'Compilation Error'
       });
     }
