@@ -10,4 +10,4 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        value: https://chaitanyas36.github.io
+        value: https://chaitanyas36.github.io/chai-and-code/
