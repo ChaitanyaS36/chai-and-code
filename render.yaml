@@ -1,9 +1,8 @@
 services:
   - type: web
     name: chai-and-code-backend
-    env: node
-    buildCommand: apt-get update && apt-get install -y g++ && npm install
-    startCommand: npm start
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
     envVars:
       - key: NODE_ENV
         value: production
