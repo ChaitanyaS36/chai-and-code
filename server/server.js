@@ -101,9 +101,26 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+// Verify g++ is available on startup
+import { exec } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
+
+const verifyGpp = async () => {
+  try {
+    const result = await execAsync('g++ --version', { timeout: 5000 });
+    console.log('✅ g++ compiler is available');
+    console.log('g++ version:', result.stdout.split('\n')[0]);
+  } catch (error) {
+    console.error('❌ WARNING: g++ compiler not found!');
+    console.error('Code compilation will not work. Make sure build-essential is installed in Dockerfile.');
+  }
+};
+
+app.listen(PORT, async () => {
   console.log(`☕ Chai & Code Backend running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  await verifyGpp();
 });
 
 export default app;
