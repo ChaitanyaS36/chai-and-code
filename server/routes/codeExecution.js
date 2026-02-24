@@ -1,5 +1,5 @@
 import express from 'express';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import { writeFile, unlink, readFile } from 'fs/promises';
 import { join } from 'path';
@@ -8,24 +8,44 @@ import { tmpdir } from 'os';
 const router = express.Router();
 const execAsync = promisify(exec);
 
-// Custom exec function that properly captures stderr
-const execWithErrorCapture = (command, options = {}) => {
+// Custom exec function with proper timeout and error handling
+const execWithTimeout = (command, timeoutMs = 30000) => {
   return new Promise((resolve, reject) => {
-    exec(command, { ...options, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+    const child = exec(command, { 
+      maxBuffer: 1024 * 1024 * 10, // 10MB buffer
+      killSignal: 'SIGKILL'
+    }, (error, stdout, stderr) => {
       if (error) {
-        // Attach stdout and stderr to error object
-        error.stdout = stdout;
-        error.stderr = stderr;
+        error.stdout = stdout || '';
+        error.stderr = stderr || '';
         reject(error);
       } else {
         resolve({ stdout, stderr });
       }
+    });
+
+    // Set timeout
+    const timeout = setTimeout(() => {
+      child.kill('SIGKILL');
+      const timeoutError = new Error(`Command timed out after ${timeoutMs}ms`);
+      timeoutError.code = 'ETIMEDOUT';
+      timeoutError.stdout = '';
+      timeoutError.stderr = '';
+      reject(timeoutError);
+    }, timeoutMs);
+
+    // Clear timeout on completion
+    child.on('exit', () => clearTimeout(timeout));
+    child.on('error', (err) => {
+      clearTimeout(timeout);
+      reject(err);
     });
   });
 };
 
 // Timeout for code execution (10 seconds)
 const EXECUTION_TIMEOUT = 10000;
+const COMPILATION_TIMEOUT = 30000; // 30 seconds for compilation
 
 router.post('/execute', async (req, res) => {
   const { code, input, language = 'cpp' } = req.body;
@@ -75,31 +95,37 @@ router.post('/execute', async (req, res) => {
 
     // Compile C++ code
     const executablePath = tempFile.replace('.cpp', '');
-    const compileCommand = `g++ -o "${executablePath}" "${tempFile}" -std=c++17`;
+    const compileCommand = `g++ -o "${executablePath}" "${tempFile}" -std=c++17 2>&1`;
     
     let compileResult;
     try {
-      compileResult = await execWithErrorCapture(compileCommand, { 
-        timeout: 5000
-      });
+      compileResult = await execWithTimeout(compileCommand, COMPILATION_TIMEOUT);
     } catch (compileError) {
       // Compilation error - capture detailed error message
       // g++ writes errors to stderr, so prioritize that
-      const errorOutput = compileError.stderr || compileError.stdout || compileError.message || 'Compilation failed';
+      let errorOutput = '';
+      
+      if (compileError.code === 'ETIMEDOUT') {
+        errorOutput = `Compilation timed out after ${COMPILATION_TIMEOUT}ms. The code might be too complex or there's an infinite loop.`;
+      } else {
+        // Combine stderr and stdout (since we redirect 2>&1)
+        errorOutput = (compileError.stderr || compileError.stdout || compileError.message || 'Compilation failed').toString().trim();
+      }
       
       console.error('Compilation error details:', {
         message: compileError.message,
         stderr: compileError.stderr,
         stdout: compileError.stdout,
         code: compileError.code,
-        signal: compileError.signal
+        signal: compileError.signal,
+        timedOut: compileError.code === 'ETIMEDOUT'
       });
       
       // Return the actual compilation error
       return res.json({
         success: false,
-        output: errorOutput.toString().trim() || 'Compilation failed - no error details available',
-        error: 'Compilation Error'
+        output: errorOutput || 'Compilation failed - no error details available',
+        error: compileError.code === 'ETIMEDOUT' ? 'Compilation Timeout' : 'Compilation Error'
       });
     }
 
