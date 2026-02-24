@@ -58,16 +58,28 @@ router.post('/execute', async (req, res) => {
     }
 
     // Compile C++ code
-    const compileCommand = `g++ -o ${tempFile.replace('.cpp', '')} ${tempFile} -std=c++17 2>&1`;
+    const executablePath = tempFile.replace('.cpp', '');
+    const compileCommand = `g++ -o "${executablePath}" "${tempFile}" -std=c++17 2>&1`;
     
     let compileResult;
     try {
-      compileResult = await execAsync(compileCommand, { timeout: 5000 });
+      compileResult = await execAsync(compileCommand, { 
+        timeout: 5000,
+        maxBuffer: 1024 * 1024 // 1MB buffer
+      });
     } catch (compileError) {
-      // Compilation error
+      // Compilation error - capture detailed error message
+      const errorOutput = compileError.stderr || compileError.stdout || compileError.message || 'Compilation failed';
+      console.error('Compilation error:', {
+        message: compileError.message,
+        stderr: compileError.stderr,
+        stdout: compileError.stdout,
+        code: compileError.code
+      });
+      
       return res.json({
         success: false,
-        output: compileError.stderr || compileError.stdout || 'Compilation failed',
+        output: errorOutput.toString(),
         error: 'Compilation Error'
       });
     }
@@ -75,11 +87,13 @@ router.post('/execute', async (req, res) => {
     // Execute the compiled program
     const baseName = tempFile.replace('.cpp', '');
     const executable = process.platform === 'win32' ? `${baseName}.exe` : baseName;
+    
+    // Use proper input redirection for Linux (Render)
     const executeCommand = input 
       ? (process.platform === 'win32' 
-          ? `type ${inputFile} | ${executable}`
-          : `${executable} < ${inputFile}`)
-      : executable;
+          ? `type "${inputFile}" | "${executable}"`
+          : `"${executable}" < "${inputFile}"`)
+      : `"${executable}"`;
 
     let executionResult;
     try {
@@ -95,9 +109,17 @@ router.post('/execute', async (req, res) => {
       });
     } catch (execError) {
       // Runtime error or timeout
+      const errorOutput = execError.stderr || execError.stdout || execError.message || 'Runtime error occurred';
+      console.error('Execution error:', {
+        message: execError.message,
+        stderr: execError.stderr,
+        stdout: execError.stdout,
+        code: execError.code
+      });
+      
       return res.json({
         success: false,
-        output: execError.stderr || execError.stdout || 'Runtime error occurred',
+        output: errorOutput.toString(),
         error: execError.code === 'ETIMEDOUT' ? 'Execution Timeout' : 'Runtime Error'
       });
     }
