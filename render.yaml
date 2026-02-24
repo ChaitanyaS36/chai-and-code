@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: chai-and-code-backend
+    env: node
+    buildCommand: apt-get update && apt-get install -y g++ && npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        value: https://chaitanyas36.github.io
